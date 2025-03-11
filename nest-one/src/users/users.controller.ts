@@ -1,5 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, ParseIntPipe, ValidationPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+
 
 @Controller('users') // /users this is considered the decorator
 //decorators are functions prefixed with the @ symbol and run automatically when called
@@ -25,8 +28,8 @@ export class UsersController {
   }
 
   @Get(':id') // GET /users/:id
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id)
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.findOne(id)
   }
 
    //this would not work because if you have a route such as :id something specific you cant have a general route like interns after because itll return {id: interns} from above get and never get here
@@ -37,18 +40,20 @@ export class UsersController {
   }
   // Example test above
 
+  //ValidationPipe validate against our dto and will get messages that make sense if you have the wrong info
   @Post() // POST /users
-  create(@Body() user: {name: string, email: string, role: 'INTERN' | 'ENGINEER' | 'ADMIN'}) {
-    return this.usersService.create(user)
+  create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto)
   }
 
   @Patch(':id') // PATCH /users/:id
-  update(@Param('id') id: string, @Body() userUpdate: {name?: string, email?: string, role?: 'INTERN' | 'ENGINEER' | 'ADMIN'}) {
-    return this.usersService.update(+id, userUpdate)
+  update(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto)
   }
 
   @Delete(':id') // DELETE /users/:id
-  delete(@Param('id') id: string) {
-    return this.usersService.delete(+id)
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.delete(id)
   }
 }
+//ParseInt pipes transforms string numbers to numeric data and also validates the request data because we will receive an error if we send letters now numbers
