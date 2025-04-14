@@ -11,7 +11,9 @@ import {
 import { EmployeesService } from './employees.service';
 import { Prisma } from '@prisma/client';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle() //here would skip any throttle for all of the below
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
@@ -20,12 +22,13 @@ export class EmployeesController {
   create(@Body() createEmployeeDto: Prisma.EmployeeCreateInput) {
     return this.employeesService.create(createEmployeeDto);
   }
-
+@SkipThrottle({default: false}) // this decorator will rate limit the request before despite the global skip throttle
   @Get()
   findAll(@Query('role') role?: 'INTERN' | 'ENGINEER' | 'ADMIN') {
     return this.employeesService.findAll(role);
   }
 
+  @Throttle({ short: {ttl: 1000, limit: 1}}) //time to live (ttl)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.employeesService.findOne(+id);
